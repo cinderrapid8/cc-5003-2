@@ -23,3 +23,8 @@ __pycache__/
 *.log
 .env
 .env.*
+
+# local rootless Qt5 toolchain (fetched by .localdeb/fetch_qt.py)
+.localdeb/
+# generated demo audio output
+out/
