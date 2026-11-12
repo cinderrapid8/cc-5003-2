@@ -16,8 +16,8 @@ CORE_CXX := $(CXXSTD) $(WARN) $(OPT) -pthread -Icore
 CORE_SRCS := $(wildcard core/*.cpp)
 CORE_OBJS := $(patsubst core/%.cpp,build/obj/%.o,$(CORE_SRCS))
 
-.PHONY: all clean test demo ui run-test run-demo
-all: build/mixtests build/mixdemo build/mixui
+.PHONY: all clean test demo ui run-test run-demo regress
+all: build/mixtests build/regress_conc build/mixdemo build/mixui
 
 build/obj:
 	mkdir -p build/obj
@@ -26,6 +26,10 @@ build/obj/%.o: core/%.cpp | build/obj
 	$(CXX) $(CORE_CXX) -c $< -o $@
 
 build/mixtests: tests/tests.cpp $(CORE_OBJS) | build/obj
+	$(CXX) $(CORE_CXX) $^ -o $@ -pthread
+
+# Routing snapshot / concurrency boundary regression (matrix competition).
+build/regress_conc: tests/regression_concurrency.cpp $(CORE_OBJS) | build/obj
 	$(CXX) $(CORE_CXX) $^ -o $@ -pthread
 
 build/mixdemo: app/main.cpp $(CORE_OBJS) | build/obj
@@ -53,8 +57,12 @@ build/mixui: build/obj/ui_main.o build/obj/MainWindow.o build/obj/moc_MainWindow
 build/ui_smoke: tests/ui_smoke.cpp build/obj/MainWindow.o build/obj/moc_MainWindow.o $(CORE_OBJS)
 	$(CXX) $(CXXSTD) $(WARN) $(OPT) $(UI_FLAGS) -Icore $< build/obj/MainWindow.o build/obj/moc_MainWindow.o $(CORE_OBJS) -o $@ $(UI_LIBS) -pthread
 
-test: build/mixtests
+regress: build/regress_conc
+	./build/regress_conc
+
+test: build/mixtests build/regress_conc
 	./build/mixtests
+	./build/regress_conc
 
 demo: build/mixdemo
 	./build/mixdemo
@@ -70,4 +78,4 @@ run-test: test
 run-demo: demo
 
 clean:
-	rm -rf build/obj build/mixtests build/mixdemo build/mixui build/ui_smoke build/mixtests_asan build/mixtests_tsan
+	rm -rf build/obj build/mixtests build/regress_conc build/mixdemo build/mixui build/ui_smoke build/mixtests_asan build/mixtests_tsan build/regress_conc_asan

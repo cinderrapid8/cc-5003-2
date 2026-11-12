@@ -112,11 +112,13 @@ bool RoutingGraph::removeEdge(unsigned from, unsigned to) {
 
 const EdgeParams* RoutingGraph::findEdge(unsigned from, unsigned to) const {
     std::lock_guard<std::mutex> lock(mutex_);
+    // Exact (from, to) lookup only. Edges are directed, so a reverse match
+    // would report a route that does not exist (e.g. a bus -> source query
+    // echoing an unrelated source -> bus edge) and mislead control-side
+    // presence checks. Snapshot publishing iterates the map directly and is
+    // unaffected; this keeps the read-only query direction-honest.
     auto it = edgeMap_.find(key(from, to));
-    if (it != edgeMap_.end()) return &it->second;
-    // Also accept (to, from) argument order for read-only queries.
-    auto rev = edgeMap_.find(key(to, from));
-    return rev == edgeMap_.end() ? nullptr : &rev->second;
+    return it == edgeMap_.end() ? nullptr : &it->second;
 }
 
 bool RoutingGraph::pathExists(unsigned from, unsigned to) const {

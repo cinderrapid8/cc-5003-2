@@ -99,13 +99,15 @@ static void testMixMinus() {
     unsigned host = src[0].id, sA = src[1].id, sB = src[2].id, sC = src[3].id;
     unsigned pa = bus[0].id, rA = bus[2].id, rB = bus[3].id, rC = bus[4].id;
 
-    CHECK(g->findEdge(rA, sA) == nullptr);
-    CHECK(g->findEdge(rB, sB) == nullptr);
-    CHECK(g->findEdge(rC, sC) == nullptr);
-    CHECK(g->findEdge(rA, sB) != nullptr);
-    CHECK(g->findEdge(rB, sA) != nullptr);
-    CHECK(g->findEdge(rA, sC) != nullptr);
-    CHECK(g->findEdge(rC, sA) != nullptr);
+    // findEdge is exact-direction (source -> bus); the mix-minus gaps and
+    // the surviving cross-remote routes are queried in edge direction.
+    CHECK(g->findEdge(sA, rA) == nullptr);
+    CHECK(g->findEdge(sB, rB) == nullptr);
+    CHECK(g->findEdge(sC, rC) == nullptr);
+    CHECK(g->findEdge(sB, rA) != nullptr);
+    CHECK(g->findEdge(sA, rB) != nullptr);
+    CHECK(g->findEdge(sC, rA) != nullptr);
+    CHECK(g->findEdge(sA, rC) != nullptr);
     CHECK(g->findEdge(host, rA) != nullptr);
     CHECK(g->findEdge(host, pa) != nullptr);
 }
